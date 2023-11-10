@@ -1,16 +1,14 @@
 {
   "private": true,
   "scripts": {
-    "build": "next build && node seed.js",
+    "build": "next build",
     "dev": "next dev",
     "start": "next start"
   },
   "dependencies": {
     "next": "latest",
     "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.6"
+    "react-dom": "18.2.0"
   },
   "engines": {
     "node": ">=18"

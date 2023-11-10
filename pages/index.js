@@ -1,19 +1,54 @@
 import Head from "next/head";
 import styles from "../styles/Home.module.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import bookChapters from "../public/MobyDick.json";
 
 export default function Home() {
-  const [results, setResults] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [data, setData] = useState(null);
+  const [response, setResponse] = useState([""]);
+  const [searchTerm, setSearchTerm] = useState([""]);
+
+  useEffect(() => {
+    async function fetchData() {
+      const reverseIndex = {};
+      for (let i = 0; i < bookChapters.length; i++) {
+        for (let j = 0; j < bookChapters[i].paragraphs.length; j++) {
+          const words = bookChapters[i].paragraphs[j].split(" ");
+          for (let w = 0; w < words.length; w++) {
+            const wordIndex = words[w]
+              .toLowerCase()
+              .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
+
+            if (!reverseIndex[wordIndex]) {
+              reverseIndex[wordIndex] = [
+                `Chapter ${i + 1} - Paragraph ${j + 1}<br/>${
+                  bookChapters[i].paragraphs[j]
+                }`,
+              ];
+            } else {
+              reverseIndex[wordIndex].push(
+                `Chapter ${i + 1} - Paragraph ${j + 1}<br/>${
+                  bookChapters[i].paragraphs[j]
+                }`,
+              );
+            }
+          }
+        }
+      }
+      setData(reverseIndex);
+    }
+    fetchData();
+  }, []);
 
   const searchAction = async () => {
     try {
-      const res = await fetch("/api/search?term=" + searchTerm);
-
-      const data = await res.json();
-      setResults(data);
+      setResponse(
+        data[searchTerm].map((paragraph) =>
+          paragraph.replace(searchTerm, `<strong>${searchTerm}</strong>`),
+        ),
+      );
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -23,76 +58,26 @@ export default function Home() {
         <title>Moby Dick Search</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
       <main>
-        <p className={styles.description}>Search term</p>
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <span>Search term:&nbsp;&nbsp;</span>
+          <input
+            type="text"
+            onChange={(e) => setSearchTerm(e.currentTarget.value)}
+            onKeyUp={(e) =>
+              e.key === "Enter" || e.keyCode === 13 ? searchAction() : null
+            }
+            value={searchTerm}
+          />
+          <button onClick={searchAction}>Search</button>
+        </div>
 
-        <input
-          type="text"
-          onChange={(e) => setSearchTerm(e.currentTarget.value)}
-          value={searchTerm}
-        />
-
-        <button onClick={searchAction}>Search</button>
-
-        <div id="results" dangerouslySetInnerHTML={{ __html: results }}></div>
+        <br />
+        <div
+          id="results"
+          dangerouslySetInnerHTML={{ __html: response.join("<br /><br />") }}
+        ></div>
       </main>
-
-      <footer>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{" "}
-          <img src="/vercel.svg" alt="Vercel" className={styles.logo} />
-        </a>
-      </footer>
-
-      <style jsx>{`
-        main {
-          padding: 5rem 0;
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-        }
-        footer {
-          width: 100%;
-          height: 100px;
-          border-top: 1px solid #eaeaea;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-        footer img {
-          margin-left: 0.5rem;
-        }
-        footer a {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          text-decoration: none;
-          color: inherit;
-        }
-        code {
-          background: #fafafa;
-          border-radius: 5px;
-          padding: 0.75rem;
-          font-size: 1.1rem;
-          font-family:
-            Menlo,
-            Monaco,
-            Lucida Console,
-            Liberation Mono,
-            DejaVu Sans Mono,
-            Bitstream Vera Sans Mono,
-            Courier New,
-            monospace;
-        }
-      `}</style>
-
       <style jsx global>{`
         html,
         body {
